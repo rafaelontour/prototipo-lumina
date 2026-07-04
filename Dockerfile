@@ -1,8 +1,8 @@
 # Etapa 1: Build da aplicação
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 ARG NEXT_PUBLIC_VERSAO_PLATAFORMA
-ARG NEXT_PUBLIC_API_BASE_URL=https://api.lumina.acerola.dev.br
+ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_VERSAO_PLATAFORMA=$NEXT_PUBLIC_VERSAO_PLATAFORMA
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 
@@ -22,7 +22,7 @@ COPY . .
 RUN npm run build
 
 # Etapa 2: Imagem final para rodar a aplicação
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
