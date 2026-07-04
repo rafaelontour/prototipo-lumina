@@ -1,0 +1,25 @@
+{
+  "name": "assistente-revisao-cientifica",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "NEXT_TELEMETRY_DISABLED=1 next dev --webpack",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build --webpack",
+    "start": "NEXT_TELEMETRY_DISABLED=1 next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@types/node": "20.11.30",
+    "@types/react": "18.2.67",
+    "@types/react-dom": "18.2.22",
+    "lucide-react": "0.468.0",
+    "next": "16.2.9",
+    "pdfjs-dist": "4.10.38",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "5.4.3"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  }
+}
