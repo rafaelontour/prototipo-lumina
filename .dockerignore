@@ -1,0 +1,12 @@
+.next
+node_modules
+.data
+.git
+.agents
+.codex
+*.log
+tsconfig.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env

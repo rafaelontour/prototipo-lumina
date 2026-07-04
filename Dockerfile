@@ -13,7 +13,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instala todas dependências (dev + prod) apenas para build
-RUN npm install
+RUN npm ci
 
 # Copia o restante da aplicação
 COPY . .
@@ -33,7 +33,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json ./package-lock.json
 
 # Instala somente dependências de produção
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 # Expondo a porta que a aplicação vai rodar
 EXPOSE 3000
