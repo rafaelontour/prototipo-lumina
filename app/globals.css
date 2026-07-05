@@ -2545,24 +2545,33 @@ body.resizing-split .split-divider span {
 .project-template-select {
   background: var(--panel);
   border: 1px solid var(--surface-line);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--ink);
-  font-size: 0.76rem;
-  height: 26px;
-  max-width: 190px;
-  padding: 0 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  height: 32px;
+  max-width: 220px;
+  padding: 0 10px;
+  transition: border-color 160ms ease;
+}
+
+.project-template-select:hover,
+.project-template-select:focus-visible {
+  border-color: var(--brand);
+  outline: none;
 }
 
 .project-artigo-template {
   align-items: center;
   display: inline-flex;
-  gap: 6px;
-  margin: 6px 0 2px;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 8px 0 2px;
 }
 
 .project-artigo-template span {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -2847,6 +2856,20 @@ body.resizing-split .split-divider span {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
+/* Página de Conformidade com Template: os cards determinísticos têm uma
+   tabelinha (Campo/Template/Artigo) que precisa de mais largura para não
+   quebrar o texto de forma feia. Limita a no máximo 2 colunas, em vez de
+   deixar o auto-fill encaixar 3+ colunas estreitas em telas largas. */
+.compliance-criteria-grid.compliance-criteria-grid--capped {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .compliance-criteria-grid.compliance-criteria-grid--capped {
+    grid-template-columns: 1fr;
+  }
+}
+
 .compliance-criterion-card {
   background: var(--panel);
   border: 1px solid var(--surface-line);
@@ -2945,6 +2968,7 @@ body.resizing-split .split-divider span {
 .compliance-check-table {
   border-collapse: collapse;
   font-size: 0.8rem;
+  table-layout: fixed;
   width: 100%;
 }
 
@@ -2958,14 +2982,21 @@ body.resizing-split .split-divider span {
   text-transform: uppercase;
 }
 
+.compliance-check-table th:first-child,
+.compliance-check-table td:first-child {
+  width: 36%;
+}
+
 .compliance-check-table th:not(:first-child),
 .compliance-check-table td:not(:first-child) {
   text-align: right;
+  width: 32%;
 }
 
 .compliance-check-table td {
   border-top: 1px solid var(--surface-line);
   color: var(--ink);
+  overflow-wrap: break-word;
   padding: 6px;
 }
 

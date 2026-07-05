@@ -134,7 +134,7 @@ function SectionCard({ section }: { section: SectionResult }) {
         <ChevronDown className="compliance-section-chevron" size={18} />
       </summary>
       <div className="compliance-section-body">
-        <div className="compliance-criteria-grid">
+        <div className="compliance-criteria-grid compliance-criteria-grid--capped">
           {section.criteria.map((criterion) => (
             <CriterionCard criterion={criterion} key={criterion.id} />
           ))}
