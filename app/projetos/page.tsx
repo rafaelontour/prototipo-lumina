@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
+  BookCheck,
   Bot,
   CheckCircle2,
   ClipboardCheck,
+  FileCheck2,
   FileWarning,
   FilePlus2,
   FileText,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 import { apiBaseUrl, apiUrl } from "@/lib/api";
 import { readApiError, signInWithFixedCredentials } from "@/lib/auth";
+import { fetchTemplateOptions, sendAbntCompliance, sendTemplateCompliance } from "@/lib/compliance";
 import type { PublicDocumentRecord } from "@/lib/types";
 
 type ProjectKind = string;
@@ -158,6 +161,12 @@ function componentStatus(component: ProjectComponent): ReviewStatus {
 
 function isProjectComplete(project: Project) {
   return project.components.every((component) => componentStatus(component) === "ok");
+}
+
+// A conformidade com template/ABNT (docs/integracao-abnt-template.md) só se aplica à
+// seção "Artigo" da submissão -- não à Cover Letter.
+function isArticleComponent(component: ProjectComponent) {
+  return component.label.trim().toLowerCase().includes("artigo");
 }
 
 function buildVersion(
@@ -391,6 +400,12 @@ export default function DocumentosPage() {
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [groupLoadError, setGroupLoadError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [templateOptions, setTemplateOptions] = useState<string[]>([]);
+  const [selectedTemplateByComponent, setSelectedTemplateByComponent] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    void fetchTemplateOptions().then(setTemplateOptions);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -682,6 +697,16 @@ export default function DocumentosPage() {
       setStatusMessage("Enviando arquivo para a API...");
       const externalRelease = await sendExternalRelease(externalDocument.id, file);
 
+      // Conformidade com template e ABNT (docs/integracao-abnt-template.md): disparadas em
+      // paralelo apenas para a seção "Artigo", sem bloquear o fluxo principal de release.
+      if (isArticleComponent(component)) {
+        const templateName = selectedTemplateByComponent[componentKey] ?? templateOptions[0];
+        void Promise.allSettled([
+          templateName ? sendTemplateCompliance(externalDocument.id, file, templateName) : Promise.resolve(),
+          sendAbntCompliance(externalDocument.id, file)
+        ]);
+      }
+
       setStatusMessage("Processando PDF e gerando diagnóstico local...");
       const formData = new FormData();
       formData.append("file", file);
@@ -921,6 +946,11 @@ export default function DocumentosPage() {
                 onDelete={deleteProject}
                 uploadingTarget={uploadingTarget}
                 onUpload={uploadComponent}
+                templateOptions={templateOptions}
+                selectedTemplateByComponent={selectedTemplateByComponent}
+                onSelectTemplate={(componentKey, templateName) =>
+                  setSelectedTemplateByComponent((current) => ({ ...current, [componentKey]: templateName }))
+                }
               />
             ))
           )}
@@ -934,12 +964,18 @@ function ProjectCard({
   project,
   onDelete,
   uploadingTarget,
-  onUpload
+  onUpload,
+  templateOptions,
+  selectedTemplateByComponent,
+  onSelectTemplate
 }: {
   project: Project;
   onDelete: (projectId: string) => void;
   uploadingTarget: string | null;
   onUpload: (projectId: string, componentKey: ComponentKey, file: File) => void;
+  templateOptions: string[];
+  selectedTemplateByComponent: Record<string, string>;
+  onSelectTemplate: (componentKey: ComponentKey, templateName: string) => void;
 }) {
   const complete = isProjectComplete(project);
   const okCount = project.components.filter((component) => componentStatus(component) === "ok").length;
@@ -974,6 +1010,9 @@ function ProjectCard({
           const isAnalysisPending = latest?.analysisStatus === "pending";
           const canUploadFile = !isUploading && !isAnalysisPending;
           const canAnalyzeWithAi = latest && !isUploading && !isAnalysisPending;
+          const isArticle = isArticleComponent(component);
+          const showComplianceLinks = isArticle && Boolean(latest?.externalDocumentId);
+          const actionsCount = 1 + (canAnalyzeWithAi ? 1 : 0) + (showComplianceLinks ? 2 : 0);
 
           return (
             <section className="component-card" key={component.key}>
@@ -983,6 +1022,24 @@ function ProjectCard({
                   {status === "pending" ? "Pendente" : status === "ok" ? "OK da IA" : "Ajustes"}
                 </span>
               </div>
+
+              {isArticle && templateOptions.length > 0 && (
+                <label className="project-artigo-template">
+                  <span>Template</span>
+                  <select
+                    className="project-template-select"
+                    value={selectedTemplateByComponent[component.key] ?? templateOptions[0]}
+                    onChange={(event) => onSelectTemplate(component.key, event.target.value)}
+                  >
+                    {templateOptions.map((templateName) => (
+                      <option key={templateName} value={templateName}>
+                        {templateName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
               <h3>{component.label}</h3>
               <p>{component.description}</p>
 
@@ -1009,7 +1066,7 @@ function ProjectCard({
                 </div>
               )}
 
-              <div className={`project-component-actions ${canAnalyzeWithAi ? "" : "single-action"}`}>
+              <div className={`project-component-actions ${actionsCount > 1 ? "" : "single-action"}`}>
                 <label className={`project-upload-button ${canUploadFile ? "" : "disabled"}`} aria-disabled={!canUploadFile}>
                   {isUploading ? <Loader2 className="spin" size={18} /> : latest ? <FilePlus2 size={18} /> : <UploadCloud size={18} />}
                   {isUploading || isAnalysisPending ? "Analisando..." : latest ? "Enviar nova versão" : "Enviar PDF"}
@@ -1032,6 +1089,24 @@ function ProjectCard({
                   >
                     <Bot size={18} />
                     Analisar com IA
+                  </Link>
+                )}
+                {showComplianceLinks && (
+                  <Link
+                    className="project-ai-link"
+                    href={`/conformidade-template?documentId=${encodeURIComponent(latest!.externalDocumentId!)}`}
+                  >
+                    <FileCheck2 size={18} />
+                    Conformidade com template
+                  </Link>
+                )}
+                {showComplianceLinks && (
+                  <Link
+                    className="project-ai-link"
+                    href={`/conformidade-abnt?documentId=${encodeURIComponent(latest!.externalDocumentId!)}`}
+                  >
+                    <BookCheck size={18} />
+                    Conformidade com ABNT
                   </Link>
                 )}
               </div>
