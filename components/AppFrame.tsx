@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, BriefcaseBusiness, Home, ListTree, Loader2, LogIn, Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
+import {
+  Bot,
+  BookCheck,
+  BriefcaseBusiness,
+  FileCheck2,
+  Home,
+  ListTree,
+  Loader2,
+  LogIn,
+  Menu,
+  Moon,
+  PanelLeftClose,
+  Sun
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { signInWithFixedCredentials } from "@/lib/auth";
 
@@ -16,7 +29,9 @@ const navItems = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/oiac-ia", label: "Oiac IA", icon: Bot },
   { href: "/documentos", label: "Documentos", icon: BriefcaseBusiness },
-  { href: "/tipificacoes", label: "Tipificações", icon: ListTree }
+  { href: "/tipificacoes", label: "Tipificações", icon: ListTree },
+  { href: "/conformidade-template", label: "Conformidade Template", icon: FileCheck2 },
+  { href: "/conformidade-abnt", label: "Conformidade ABNT", icon: BookCheck }
 ];
 
 export function AppFrame({ children }: { children: React.ReactNode }) {
